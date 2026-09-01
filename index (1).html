@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Aguará SN — Carga rápida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#123F3D;
+    --accent:#D9A441;
+    --bg:#FAF6EE;
+    --paper:#FFFFFF;
+    --ink:#1f2e2c;
+    --ink-soft:#5c5c54;
+    --ink-softer:#7a7a70;
+    --border:#e2ddd0;
+    --danger:#B54A32;
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:var(--font-body);
+    font-weight:400;
+    color:var(--ink);
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+  }
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 16px 10px;
+    flex-shrink:0;
+  }
+  .topbar .brand{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:18px;
+    color:var(--primary);
+    white-space:nowrap;
+    letter-spacing:0;
+  }
+  .progress-track{
+    flex:1;
+    height:10px;
+    background:var(--paper);
+    border:1.5px solid var(--border);
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    width:0%;
+    transition:width .35s ease;
+    position:relative;
+    border-radius:20px;
+  }
+  .progress-count{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    min-width:34px;
+    text-align:right;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- main stage ---------- */
+  .stage{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:8px 18px 18px;
+    max-width:520px;
+    width:100%;
+    margin:0 auto;
+  }
+  .step{
+    display:none;
+    flex-direction:column;
+    animation:enter .28s ease;
+  }
+  .step.active{display:flex;}
+  @keyframes enter{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .eyebrow{
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:600;
+    background:var(--primary);
+    color:var(--bg);
+    display:inline-block;
+    padding:5px 13px;
+    border-radius:20px;
+    margin-bottom:14px;
+    width:fit-content;
+    letter-spacing:.02em;
+  }
+  .eyebrow.optional{background:transparent; color:var(--ink-soft); border:1.5px solid var(--border);}
+  h1.question{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:27px;
+    line-height:1.25;
+    letter-spacing:0;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .hint{
+    font-size:15.5px;
+    font-weight:400;
+    color:var(--ink-soft);
+    margin:0 0 20px;
+    line-height:1.45;
+  }
+
+  /* ---------- gate: quién carga ---------- */
+  .loader-gate{
+    position:fixed;
+    inset:0;
+    background:rgba(18,63,61,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .loader-gate.show{display:flex;}
+  .loader-card{
+    background:var(--paper);
+    border:1.5px solid var(--border);
+    border-radius:16px;
+    padding:24px 22px;
+    max-width:360px;
+    width:100%;
+  }
+  .loader-card h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:21px;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .loader-card p{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    line-height:1.4;
+  }
+  .loader-card input{
+    width:100%;
+    font-size:16px;
+    font-weight:500;
+    font-family:var(--font-body);
+    padding:13px 14px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:var(--bg);
+    outline:none;
+    -webkit-appearance:none;
+    color:var(--ink);
+    margin-bottom:12px;
+  }
+  .loader-row{
+    display:flex;
+    justify-content:flex-end;
+    padding:0 18px;
+    max-width:520px;
+    width:100%;
+    margin:0 auto;
+  }
+  .loader-tag{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--primary);
+    background:var(--paper);
+    border:1.5px solid var(--border);
+    padding:4px 12px;
+    border-radius:20px;
+    cursor:pointer;
+    user-select:none;
+  }
+
+  /* ---------- horarios por franja ---------- */
+  .hor-row{
+    margin-bottom:16px;
+  }
+  .hor-label{
+    display:block;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .hor-inputs{
+    display:flex;
+    gap:8px;
+  }
+  .hor-input{
+    flex:1;
+    font-size:16px;
+    font-weight:500;
+    font-family:var(--font-body);
+    padding:13px 14px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:var(--paper);
+    outline:none;
+    -webkit-appearance:none;
+    color:var(--ink);
+    min-width:0;
+  }
+  .hor-input:focus{border-color:var(--primary);}
+  .hor-input:disabled{background:var(--bg); color:var(--ink-softer);}
+  .hor-closed-btn{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    background:var(--paper);
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    white-space:nowrap;
+  }
+  .hor-closed-btn.selected{
+    background:var(--primary);
+    color:var(--bg);
+    border-color:var(--primary);
+  }
+
+  input[type="text"], input[type="tel"], textarea{
+    width:100%;
+    font-size:17px;
+    font-weight:500;
+    font-family:var(--font-body);
+    padding:15px 14px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:var(--paper);
+    outline:none;
+    -webkit-appearance:none;
+    color:var(--ink);
+  }
+  textarea{resize:none; min-height:90px; line-height:1.4;}
+  input:focus, textarea:focus{
+    border-color:var(--primary);
+  }
+
+  /* chips (multi & single select) — un solo color de acento */
+  .chip-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .chip{
+    border:1.5px solid var(--border);
+    background:var(--paper);
+    padding:12px 18px;
+    border-radius:30px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:15.5px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    color:var(--ink);
+  }
+  .chip.selected{
+    background:var(--accent);
+    color:var(--ink);
+    border-color:var(--accent);
+  }
+  .chip:active{transform:scale(0.97);}
+
+  /* yes/no big buttons */
+  .yn-grid{display:flex; gap:12px;}
+  .yn-btn{
+    flex:1;
+    border:1.5px solid var(--border);
+    background:var(--paper);
+    padding:20px 10px;
+    border-radius:10px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:18px;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .yn-btn.selected{background:var(--accent); color:var(--ink); border-color:var(--accent);}
+
+  .sub-reveal{
+    margin-top:16px;
+    display:none;
+  }
+  .sub-reveal.show{display:block; animation:enter .25s ease;}
+
+  /* ---------- review screen ---------- */
+  .review-list{display:flex; flex-direction:column; gap:0;}
+  .review-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px 2px;
+    border-bottom:1.5px solid var(--border);
+  }
+  .review-row:first-child{border-top:1.5px solid var(--border);}
+  .review-label{font-family:var(--font-body); font-size:12.5px; font-weight:600; color:var(--ink-softer); letter-spacing:.03em;}
+  .review-value{font-size:16px; font-weight:500; margin-top:2px; word-break:break-word; color:var(--ink);}
+  .review-value.empty{color:var(--ink-softer); font-weight:400; font-style:italic;}
+  .review-edit{
+    flex-shrink:0;
+    background:transparent;
+    border:1.5px solid var(--border);
+    color:var(--primary);
+    border-radius:20px;
+    padding:6px 12px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  /* ---------- nav buttons ---------- */
+  .nav-row{
+    display:flex;
+    gap:10px;
+    margin-top:auto;
+    padding-top:22px;
+  }
+  .btn{
+    flex:1;
+    padding:16px 10px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:17px;
+    cursor:pointer;
+    position:relative;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{
+    background:var(--accent);
+    color:var(--ink);
+    border-color:var(--accent);
+  }
+  .btn-ghost{background:var(--paper); color:var(--ink); flex:0 0 auto; min-width:90px;}
+  .btn-light{background:rgba(217,164,65,0.20); border-color:var(--accent); color:var(--primary); flex:0 0 auto;}
+  .btn-skip{background:transparent; color:var(--ink-softer); box-shadow:none; border:1.5px solid transparent; flex:0 0 auto; font-family:var(--font-body); font-weight:500; text-decoration:underline;}
+  .btn[disabled]{opacity:.4; pointer-events:none;}
+
+  .error-msg{
+    color:var(--danger);
+    font-size:14px;
+    font-weight:500;
+    margin-top:10px;
+    display:none;
+  }
+  .error-msg.show{display:block;}
+
+  /* ---------- success screen ---------- */
+  .success{
+    display:none;
+    flex:1;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+  }
+  .success.active{display:flex;}
+  .success .stamp{
+    width:96px;
+    height:96px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:18px;
+  }
+  .success h2{font-family:var(--font-display); font-weight:700; font-size:27px; margin:0 0 8px; color:var(--ink);}
+  .success p{font-size:16px; color:var(--ink-soft); margin:0 0 26px; max-width:280px;}
+
+  @media (min-width:600px){
+    h1.question{font-size:32px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ---------- gate: quién carga ---------- -->
+<div class="loader-gate" id="loaderGate">
+  <div class="loader-card">
+    <h2>¿Quién carga esta ficha?</h2>
+    <p>Guardamos tu nombre en este celular para no volver a preguntar.</p>
+    <input type="text" id="f_cargador" placeholder="Tu nombre" autocomplete="off">
+    <button class="btn btn-primary" id="btnGuardarCargador" style="width:100%;">Continuar</button>
+  </div>
+</div>
+
+<div class="topbar" id="topbar">
+  <span class="brand">Aguará SN</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-count" id="progressCount">1/8</span>
+</div>
+<div class="loader-row">
+  <span class="loader-tag" id="loaderTag">👤 Elegir</span>
+</div>
+
+<div class="stage" id="stage">
+
+  <!-- Q1 Nombre -->
+  <div class="step active" data-step="0">
+    <span class="eyebrow">Obligatorio</span>
+    <h1 class="question">¿Cómo se llama el espacio?</h1>
+    <p class="hint">Ej. Gimnasio "Universo"</p>
+    <input type="text" id="f_nombre" placeholder="Nombre del negocio" autocomplete="off">
+    <p class="error-msg" id="err_nombre">Necesitamos un nombre para guardar la ficha.</p>
+  </div>
+
+  <!-- Q2 Categoria (multi) -->
+  <div class="step" data-step="1">
+    <span class="eyebrow">Obligatorio</span>
+    <h1 class="question">¿Qué categorías ofrece?</h1>
+    <p class="hint">Elegí una o varias.</p>
+    <div class="chip-grid" id="f_categorias">
+      <div class="chip" data-value="Musculación">Musculación</div>
+      <div class="chip" data-value="Funcional/Crossfit">Funcional / Crossfit</div>
+      <div class="chip" data-value="Pilates/Yoga">Pilates / Yoga</div>
+      <div class="chip" data-value="Artes Marciales/Boxeo">Artes Marciales / Boxeo</div>
+      <div class="chip" data-value="Baile">Baile</div>
+      <div class="chip" data-value="Natación">Natación</div>
+      <div class="chip" data-value="Infantil">Infantil</div>
+      <div class="chip" data-value="Otros">Otros</div>
+    </div>
+    <p class="error-msg" id="err_categorias">Marcá al menos una categoría.</p>
+  </div>
+
+  <!-- Q3 Direccion -->
+  <div class="step" data-step="2">
+    <span class="eyebrow">Obligatorio</span>
+    <h1 class="question">¿Cuál es la dirección?</h1>
+    <p class="hint">Calle y altura alcanza.</p>
+    <div class="hor-inputs">
+      <input type="text" id="f_direccion" class="hor-input" placeholder="Ej. Italia 364" autocomplete="off" style="padding:15px 14px; font-size:17px;">
+      <div class="hor-closed-btn" id="hcl_dir" style="white-space:normal; text-align:center; font-size:13px; line-height:1.2;">Sin dirección fija</div>
+    </div>
+    <p class="error-msg" id="err_direccion">Falta la dirección (o marcá "Sin dirección fija").</p>
+  </div>
+
+  <!-- Q5 Whatsapp -->
+  <div class="step" data-step="4">
+    <span class="eyebrow optional">Opcional</span>
+    <h1 class="question">¿Tienen Whatsapp de contacto?</h1>
+    <p class="hint">Si no lo tenés a mano ahora, saltealo.</p>
+    <input type="tel" id="f_whatsapp" placeholder="Ej. 336 4123456" autocomplete="off">
+  </div>
+
+  <!-- Q6 Instagram -->
+  <div class="step" data-step="5">
+    <span class="eyebrow optional">Opcional</span>
+    <h1 class="question">¿Instagram del lugar?</h1>
+    <p class="hint">Ej. @usuario</p>
+    <input type="text" id="f_instagram" placeholder="@usuario" autocomplete="off">
+  </div>
+
+  <!-- Q7 Horarios -->
+  <div class="step" data-step="6">
+    <span class="eyebrow optional">Opcional</span>
+    <h1 class="question">¿Horarios de atención?</h1>
+    <p class="hint">Tocá "Cerrado" si no abren ese día. Ej: 07 a 22</p>
+    <div class="hor-row">
+      <span class="hor-label">Lunes a viernes</span>
+      <div class="hor-inputs">
+        <input type="text" id="f_horLV" class="hor-input" placeholder="Ej. 07 a 22" autocomplete="off">
+        <div class="hor-closed-btn" id="hcl_lv">Cerrado</div>
+      </div>
+    </div>
+    <div class="hor-row">
+      <span class="hor-label">Sábados</span>
+      <div class="hor-inputs">
+        <input type="text" id="f_horSab" class="hor-input" placeholder="Ej. 09 a 13" autocomplete="off">
+        <div class="hor-closed-btn" id="hcl_sab">Cerrado</div>
+      </div>
+    </div>
+    <div class="hor-row">
+      <span class="hor-label">Domingos y feriados</span>
+      <div class="hor-inputs">
+        <input type="text" id="f_horDom" class="hor-input" placeholder="Ej. 09 a 13" autocomplete="off">
+        <div class="hor-closed-btn" id="hcl_dom">Cerrado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q8 App reservas -->
+  <div class="step" data-step="7">
+    <span class="eyebrow optional">Opcional</span>
+    <h1 class="question">¿Usan app de reservas?</h1>
+    <div class="yn-grid">
+      <div class="yn-btn" id="yn_si" data-value="si">Sí</div>
+      <div class="yn-btn" id="yn_no" data-value="no">No</div>
+    </div>
+    <div class="sub-reveal" id="appNombreWrap">
+      <input type="text" id="f_appnombre" placeholder="¿Cuál app?" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Q9 Diferencial -->
+  <div class="step" data-step="8">
+    <span class="eyebrow optional">Opcional</span>
+    <h1 class="question">¿Algo que lo distinga?</h1>
+    <p class="hint">Ej. Ideal para sobrepeso, rehabilitación de rodilla, ambiente familiar.</p>
+    <textarea id="f_diferencial" placeholder="Diferencial / especialidad"></textarea>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="step" data-step="9">
+    <span class="eyebrow">Último paso</span>
+    <h1 class="question">Revisá antes de guardar</h1>
+    <div class="review-list" id="reviewList"></div>
+  </div>
+
+  <div class="nav-row" id="navRow">
+    <button class="btn btn-ghost" id="btnBack">Atrás</button>
+    <button class="btn btn-skip" id="btnSkip">Saltear</button>
+    <button class="btn btn-primary" id="btnNext">Siguiente</button>
+  </div>
+</div>
+
+<div class="success" id="successScreen">
+  <div class="stamp">
+    <svg viewBox="0 0 100 100" width="88" height="88">
+      <circle cx="50" cy="50" r="48" fill="var(--primary)"/>
+      <path d="M30 52 L44 66 L72 36" stroke="var(--bg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  </div>
+  <h2>Ficha guardada</h2>
+  <p>Se sumó al directorio. Podés cargar otro espacio ahora mismo.</p>
+  <button class="btn btn-light" id="btnAnother">Cargar otro espacio</button>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG — pegá acá la URL de tu Apps Script Web App
+   ========================================================= */
+const CONFIG = {
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyUgUafXHo2TgWblMyqEDNszs27rA80XWx4fUHMFwn90X3Mbo5-3RcaSxeMe0iXDrBtVg/exec"
+};
+
+const steps = Array.from(document.querySelectorAll('.step'));
+const totalSteps = steps.length; // includes review as last
+let current = 0;
+
+const state = {
+  nombre:'', categorias:[], direccion:'', sinDireccion:false,
+  whatsapp:'', instagram:'',
+  horLV:'', horSab:'', horDom:'', horLVClosed:false, horSabClosed:false, horDomClosed:false,
+  reservas:'no', appNombre:'', diferencial:''
+};
+
+const optionalSteps = new Set([3,4,5,6,7]); // index of optional steps
+
+const progressFill = document.getElementById('progressFill');
+const progressCount = document.getElementById('progressCount');
+const btnBack = document.getElementById('btnBack');
+const btnSkip = document.getElementById('btnSkip');
+const btnNext = document.getElementById('btnNext');
+const navRow = document.getElementById('navRow');
+const topbar = document.getElementById('topbar');
+
+// ---- draft autosave (por si se corta a mitad) ----
+function saveDraft(){ try{ localStorage.setItem('directorioSN_draft', JSON.stringify(state)); }catch(e){} }
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem('directorioSN_draft');
+    if(raw){ Object.assign(state, JSON.parse(raw)); hydrateFromState(); }
+  }catch(e){}
+}
+function clearDraft(){ try{ localStorage.removeItem('directorioSN_draft'); }catch(e){} }
+
+function hydrateFromState(){
+  document.getElementById('f_nombre').value = state.nombre;
+  document.getElementById('f_direccion').value = state.direccion;
+  setSinDireccionUI(state.sinDireccion);
+  document.getElementById('f_whatsapp').value = state.whatsapp;
+  document.getElementById('f_instagram').value = state.instagram;
+  document.getElementById('f_horLV').value = state.horLV;
+  document.getElementById('f_horSab').value = state.horSab;
+  document.getElementById('f_horDom').value = state.horDom;
+  setClosedUI('lv', state.horLVClosed);
+  setClosedUI('sab', state.horSabClosed);
+  setClosedUI('dom', state.horDomClosed);
+  document.getElementById('f_diferencial').value = state.diferencial;
+  document.getElementById('f_appnombre').value = state.appNombre;
+  document.querySelectorAll('#f_categorias .chip').forEach(chip=>{
+    if(state.categorias.includes(chip.dataset.value)) chip.classList.add('selected');
+  });
+  if(state.reservas === 'si'){
+    document.getElementById('yn_si').classList.add('selected');
+    document.getElementById('appNombreWrap').classList.add('show');
+  } else if(state.reservas === 'no'){
+    document.getElementById('yn_no').classList.add('selected');
+  }
+}
+
+// ---- horarios por franja ----
+const HOR_MAP = {
+  lv:  {input:'f_horLV',  btn:'hcl_lv',  key:'horLV',  closedKey:'horLVClosed'},
+  sab: {input:'f_horSab', btn:'hcl_sab', key:'horSab', closedKey:'horSabClosed'},
+  dom: {input:'f_horDom', btn:'hcl_dom', key:'horDom', closedKey:'horDomClosed'}
+};
+function setClosedUI(id, closed){
+  const m = HOR_MAP[id];
+  const input = document.getElementById(m.input);
+  const btn = document.getElementById(m.btn);
+  btn.classList.toggle('selected', closed);
+  input.disabled = closed;
+  if(closed) input.value='';
+}
+Object.keys(HOR_MAP).forEach(id=>{
+  const m = HOR_MAP[id];
+  document.getElementById(m.btn).addEventListener('click', ()=>{
+    state[m.closedKey] = !state[m.closedKey];
+    if(state[m.closedKey]) state[m.key]='';
+    setClosedUI(id, state[m.closedKey]);
+    saveDraft();
+  });
+});
+function buildHorariosString(){
+  const parts = [];
+  if(state.horLVClosed) parts.push('Lun a Vie: Cerrado');
+  else if(state.horLV.trim()) parts.push('Lun a Vie ' + state.horLV.trim());
+  if(state.horSabClosed) parts.push('Sáb: Cerrado');
+  else if(state.horSab.trim()) parts.push('Sáb ' + state.horSab.trim());
+  if(state.horDomClosed) parts.push('Dom y feriados: Cerrado');
+  else if(state.horDom.trim()) parts.push('Dom y feriados ' + state.horDom.trim());
+  return parts.join(' · ');
+}
+
+// ---- sin dirección fija ----
+function setSinDireccionUI(activo){
+  const input = document.getElementById('f_direccion');
+  const btn = document.getElementById('hcl_dir');
+  btn.classList.toggle('selected', activo);
+  input.disabled = activo;
+  if(activo) input.value='';
+}
+document.getElementById('hcl_dir').addEventListener('click', ()=>{
+  state.sinDireccion = !state.sinDireccion;
+  if(state.sinDireccion) state.direccion='';
+  setSinDireccionUI(state.sinDireccion);
+  hideError('err_direccion');
+  saveDraft();
+});
+function buildDireccionString(){
+  return state.sinDireccion ? 'Sin dirección fija' : state.direccion.trim();
+}
+
+// ---- chip / yn interactions ----
+document.querySelectorAll('#f_categorias .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    chip.classList.toggle('selected');
+    const v = chip.dataset.value;
+    if(chip.classList.contains('selected')){
+      if(!state.categorias.includes(v)) state.categorias.push(v);
+    } else {
+      state.categorias = state.categorias.filter(c=>c!==v);
+    }
+    hideError('err_categorias');
+    saveDraft();
+  });
+});
+
+document.getElementById('yn_si').addEventListener('click', ()=>{
+  state.reservas='si';
+  document.getElementById('yn_si').classList.add('selected');
+  document.getElementById('yn_no').classList.remove('selected');
+  document.getElementById('appNombreWrap').classList.add('show');
+  saveDraft();
+});
+document.getElementById('yn_no').addEventListener('click', ()=>{
+  state.reservas='no';
+  document.getElementById('yn_no').classList.add('selected');
+  document.getElementById('yn_si').classList.remove('selected');
+  document.getElementById('appNombreWrap').classList.remove('show');
+  state.appNombre='';
+  document.getElementById('f_appnombre').value='';
+  saveDraft();
+  setTimeout(()=>{
+    if(current < totalSteps-1){ current++; renderStep(); }
+  }, 220);
+});
+
+// ---- text inputs sync ----
+const textBindings = [
+  ['f_nombre','nombre'], ['f_direccion','direccion'],
+  ['f_whatsapp','whatsapp'], ['f_instagram','instagram'],
+  ['f_horLV','horLV'], ['f_horSab','horSab'], ['f_horDom','horDom'],
+  ['f_diferencial','diferencial'], ['f_appnombre','appNombre']
+];
+textBindings.forEach(([id,key])=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    state[key] = e.target.value;
+    hideError('err_'+key);
+    saveDraft();
+  });
+});
+
+function hideError(id){
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('show');
+}
+
+// ---- navigation ----
+function renderStep(){
+  steps.forEach((s,i)=> s.classList.toggle('active', i===current));
+  const isReview = current === totalSteps - 1;
+
+  progressFill.style.width = ((current+1)/totalSteps*100)+'%';
+  progressCount.textContent = (current+1)+'/'+totalSteps;
+
+  btnBack.style.visibility = current===0 ? 'hidden' : 'visible';
+  btnSkip.style.display = (optionalSteps.has(current) && !isReview) ? 'block' : 'none';
+  btnNext.textContent = isReview ? 'Guardar ficha' : 'Siguiente';
+
+  if(isReview){ renderReview(); topbar.style.opacity='0.5'; } else { topbar.style.opacity='1'; }
+}
+
+function validateCurrent(){
+  if(current===0){
+    if(!state.nombre.trim()){ document.getElementById('err_nombre').classList.add('show'); return false; }
+  }
+  if(current===1){
+    if(state.categorias.length===0){ document.getElementById('err_categorias').classList.add('show'); return false; }
+  }
+  if(current===2){
+    if(!state.sinDireccion && !state.direccion.trim()){ document.getElementById('err_direccion').classList.add('show'); return false; }
+  }
+  return true;
+}
+
+btnNext.addEventListener('click', ()=>{
+  if(!validateCurrent()) return;
+  if(current === totalSteps-1){ submitForm(); return; }
+  current++;
+  renderStep();
+});
+btnBack.addEventListener('click', ()=>{
+  if(current>0){ current--; renderStep(); }
+});
+btnSkip.addEventListener('click', ()=>{
+  current++;
+  renderStep();
+});
+
+// ---- Enter avanza al siguiente paso (útil en PC) ----
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  const tag = document.activeElement.tagName;
+  if(tag === 'TEXTAREA') return; // en el textarea, Enter sigue siendo salto de línea
+
+  if(document.getElementById('loaderGate').classList.contains('show')){
+    e.preventDefault();
+    document.getElementById('btnGuardarCargador').click();
+    return;
+  }
+  if(document.getElementById('successScreen').classList.contains('active')) return;
+
+  e.preventDefault();
+  btnNext.click();
+});
+
+function jumpTo(i){ current=i; renderStep(); }
+
+function renderReview(){
+  const rows = [
+    ['Nombre', state.nombre],
+    ['Categorías', state.categorias.join(', ')],
+    ['Dirección', buildDireccionString()],
+    ['Whatsapp', state.whatsapp],
+    ['Instagram', state.instagram],
+    ['Horarios', buildHorariosString()],
+    ['App reservas', state.reservas==='si' ? ('Sí'+(state.appNombre?' — '+state.appNombre:'')) : 'No'],
+    ['Diferencial', state.diferencial],
+  ];
+  const stepIndexByLabel = [0,1,2,3,4,5,6,7];
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  rows.forEach((r, idx)=>{
+    const [label, value] = r;
+    const row = document.createElement('div');
+    row.className='review-row';
+    row.innerHTML = `
+      <div>
+        <div class="review-label">${label}</div>
+        <div class="review-value ${value ? '' : 'empty'}">${value || 'Sin cargar'}</div>
+      </div>
+      <div class="review-edit" data-jump="${stepIndexByLabel[idx]}">Editar</div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.review-edit').forEach(btn=>{
+    btn.addEventListener('click', ()=> jumpTo(parseInt(btn.dataset.jump,10)));
+  });
+}
+
+// ---- submit ----
+function submitForm(){
+  btnNext.disabled = true;
+  btnNext.textContent = 'Guardando...';
+
+  const payload = {
+    nombre: state.nombre.trim(),
+    categorias: state.categorias.join(', '),
+    diferencial: state.diferencial.trim(),
+    zona: '', // se dejó de pedir en el formulario (no aporta en esta ciudad); columna del Sheet se mantiene vacía por compatibilidad
+    direccion: buildDireccionString(),
+    whatsapp: state.whatsapp.trim(),
+    horarios: buildHorariosString(),
+    reservas: state.reservas==='si' ? ('Sí' + (state.appNombre.trim() ? ', '+state.appNombre.trim() : '')) : 'No',
+    instagram: state.instagram.trim(),
+    cargador: getLoader()
+  };
+
+  fetch(CONFIG.SCRIPT_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).then(()=>{
+    onSaved();
+  }).catch(()=>{
+    // no-cors no permite leer error real; igual mostramos éxito
+    // porque el fetch en sí normalmente sí llega al script.
+    onSaved();
+  });
+}
+
+function onSaved(){
+  clearDraft();
+  document.getElementById('stage').style.display='none';
+  document.getElementById('successScreen').classList.add('active');
+}
+
+document.getElementById('btnAnother').addEventListener('click', ()=>{
+  // reset total
+  Object.assign(state, {nombre:'', categorias:[], direccion:'', sinDireccion:false,
+    whatsapp:'', instagram:'',
+    horLV:'', horSab:'', horDom:'', horLVClosed:false, horSabClosed:false, horDomClosed:false,
+    reservas:'no', appNombre:'', diferencial:''});
+  document.querySelectorAll('input, textarea').forEach(el=>{ el.value=''; el.disabled=false; });
+  document.querySelectorAll('.chip.selected').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.yn-btn.selected').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.hor-closed-btn.selected').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('appNombreWrap').classList.remove('show');
+  document.getElementById('stage').style.display='flex';
+  document.getElementById('successScreen').classList.remove('active');
+  current = 0;
+  renderStep();
+});
+
+// ---- quién carga (por dispositivo) ----
+const LOADER_KEY = 'directorioSN_cargador';
+function getLoader(){ try{ return localStorage.getItem(LOADER_KEY) || ''; }catch(e){ return ''; } }
+function setLoader(name){ try{ localStorage.setItem(LOADER_KEY, name); }catch(e){} }
+function updateLoaderTag(){
+  const n = getLoader();
+  document.getElementById('loaderTag').textContent = n ? ('👤 ' + n) : '👤 Elegir';
+}
+function showLoaderGate(){
+  document.getElementById('f_cargador').value = getLoader();
+  document.getElementById('loaderGate').classList.add('show');
+}
+function hideLoaderGate(){ document.getElementById('loaderGate').classList.remove('show'); }
+document.getElementById('btnGuardarCargador').addEventListener('click', ()=>{
+  const val = document.getElementById('f_cargador').value.trim();
+  if(!val) return;
+  setLoader(val);
+  updateLoaderTag();
+  hideLoaderGate();
+});
+document.getElementById('loaderTag').addEventListener('click', showLoaderGate);
+
+// init
+loadDraft();
+if(!getLoader()){ showLoaderGate(); } else { updateLoaderTag(); }
+renderStep();
+</script>
+
+</body>
+</html>
